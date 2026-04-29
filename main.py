@@ -66,8 +66,8 @@ ARGS = {
     "agent_config": {
         "Impostor": "LLM",
         "Crewmate": "LLM",
-        "IMPOSTOR_LLM_CHOICES": BIG_LIST_OF_MODELS,
-        "CREWMATE_LLM_CHOICES": BIG_LIST_OF_MODELS,
+        "IMPOSTOR_LLM_CHOICES": ["qwen/quen-2.5-1.5B-instruct"],
+        "CREWMATE_LLM_CHOICES": ["qwen/quen-2.5-1.5B-instruct"],
     },
     "UI": False,
 }
@@ -85,8 +85,10 @@ async def multiple_games(experiment_name=None, num_games=1, rate_limit=50):
             if ARGS.get("tournament_style") == "1on1":
                 # Randomly select one model for each role for this specific game
                 game_config = ARGS["agent_config"].copy()
-                game_config["CREWMATE_LLM_CHOICES"] = [random.choice(BIG_LIST_OF_MODELS)]
-                game_config["IMPOSTOR_LLM_CHOICES"] = [random.choice(BIG_LIST_OF_MODELS)]
+                # game_config["CREWMATE_LLM_CHOICES"] = [random.choice(BIG_LIST_OF_MODELS)]
+                # game_config["IMPOSTOR_LLM_CHOICES"] = [random.choice(BIG_LIST_OF_MODELS)]
+                game_config["CREWMATE_LLM_CHOICES"] = ["Qwen/Qwen2.5-1.5B-Instruct"]
+                game_config["IMPOSTOR_LLM_CHOICES"] = ["Qwen/Qwen2.5-1.5B-Instruct"]
             else:
                 game_config = ARGS["agent_config"]
                 

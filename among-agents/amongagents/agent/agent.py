@@ -12,6 +12,8 @@ import requests
 import asyncio
 from amongagents.agent.neutral_prompts import *
 
+from amongagents.envs.llm import generate
+
 # Set Flask environment variable to True by default
 if "FLASK" not in os.environ:
     os.environ["FLASK"] = "True"
@@ -159,39 +161,54 @@ class LLMAgent(Agent):
 
         print(".", end="", flush=True)
 
-    async def send_request(self, messages):
-        """Send a POST request to OpenRouter API with the provided messages."""
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": self.temperature,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "repetition_penalty": 1,
-            "top_k": 0,
-        }
+    # async def send_request(self, messages):
+    #     """Send a POST request to OpenRouter API with the provided messages."""
+    #     headers = {"Authorization": f"Bearer {self.api_key}"}
+    #     payload = {
+    #         "model": self.model,
+    #         "messages": messages,
+    #         "temperature": self.temperature,
+    #         "top_p": 1,
+    #         "frequency_penalty": 0,
+    #         "presence_penalty": 0,
+    #         "repetition_penalty": 1,
+    #         "top_k": 0,
+    #     }
         
-        async with aiohttp.ClientSession() as session:
-            for attempt in range(10):
-                try:
-                    async with session.post(self.api_url, headers=headers, data=json.dumps(payload)) as response:
-                        if response is None:
-                            print(f"API request failed: response is None for {self.model}.")
-                            continue
-                        if response.status == 200:
-                            data = await response.json()
-                            if "choices" not in data:
-                                print(f"API request failed: 'choices' key not in response for {self.model}.")
-                                continue
-                            if not data["choices"]:
-                                print(f"API request failed: 'choices' key is empty in response for {self.model}.")
-                                continue
-                            return data["choices"][0]["message"]["content"]
-                except Exception as e:
-                    print(f"API request failed. Retrying... ({attempt + 1}/10) for {self.model}.")
-                    continue
+    #     async with aiohttp.ClientSession() as session:
+    #         for attempt in range(10):
+    #             try:
+    #                 async with session.post(self.api_url, headers=headers, data=json.dumps(payload)) as response:
+    #                     if response is None:
+    #                         print(f"API request failed: response is None for {self.model}.")
+    #                         continue
+    #                     if response.status == 200:
+    #                         data = await response.json()
+    #                         if "choices" not in data:
+    #                             print(f"API request failed: 'choices' key not in response for {self.model}.")
+    #                             continue
+    #                         if not data["choices"]:
+    #                             print(f"API request failed: 'choices' key is empty in response for {self.model}.")
+    #                             continue
+    #                         return data["choices"][0]["message"]["content"]
+    #             except Exception as e:
+    #                 print(f"API request failed. Retrying... ({attempt + 1}/10) for {self.model}.")
+    #                 continue
+    #         return 'SPEAK: ...'
+
+    async def send_request(self, messages):
+        combined_prompt = f"SYSTEM: {messages[0]['content']}\n\nUSER: {messages[1]['content']}"
+        try:
+            # 2. Run the local generation in a separate thread to avoid blocking the event loop
+            # This calls the generate(prompt) function from your llm.py
+            response = await asyncio.to_thread(generate, combined_prompt)
+            
+            # 3. Clean up the response if the local model includes the prompt in output
+            # (Often necessary for local causal models)
+            return response.strip()
+        
+        except Exception as e:
+            print(f"Local LLM generation failed: {e}")
             return 'SPEAK: ...'
 
     def respond(self, message):
