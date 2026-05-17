@@ -12,10 +12,10 @@ for module in [datasets, plots, configs, evaluate_utils]:
     importlib.reload(module)
 
 from probe_datasets import AmongUsDataset, TruthfulQADataset, DishonestQADataset, RepEngDataset, RolePlayingDataset, ApolloProbeDataset
-from configs import config_phi4, config_gpt2, config_llama3
+from configs import config_phi4, config_gpt2, config_qwen
 
 def main(dataset_name: str):
-    config = config_llama3
+    config = config_qwen
     model_name = config["model_name"]
     load_models = True
 

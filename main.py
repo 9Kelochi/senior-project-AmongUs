@@ -66,8 +66,8 @@ ARGS = {
     "agent_config": {
         "Impostor": "LLM",
         "Crewmate": "LLM",
-        "IMPOSTOR_LLM_CHOICES": ["qwen/quen-2.5-1.5B-instruct"],
-        "CREWMATE_LLM_CHOICES": ["qwen/quen-2.5-1.5B-instruct"],
+        "IMPOSTOR_LLM_CHOICES": ["qwen2.5:1.5b-instruct"],
+        "CREWMATE_LLM_CHOICES": ["qwen2.5:1.5b-instruct"],
     },
     "UI": False,
 }
@@ -87,8 +87,8 @@ async def multiple_games(experiment_name=None, num_games=1, rate_limit=50):
                 game_config = ARGS["agent_config"].copy()
                 # game_config["CREWMATE_LLM_CHOICES"] = [random.choice(BIG_LIST_OF_MODELS)]
                 # game_config["IMPOSTOR_LLM_CHOICES"] = [random.choice(BIG_LIST_OF_MODELS)]
-                game_config["CREWMATE_LLM_CHOICES"] = ["Qwen/Qwen2.5-1.5B-Instruct"]
-                game_config["IMPOSTOR_LLM_CHOICES"] = ["Qwen/Qwen2.5-1.5B-Instruct"]
+                game_config["CREWMATE_LLM_CHOICES"] = ["qwen2.5:1.5b-instruct"]
+                game_config["IMPOSTOR_LLM_CHOICES"] = ["qwen2.5:1.5b-instruct"]
             else:
                 game_config = ARGS["agent_config"]
                 
@@ -108,19 +108,35 @@ async def multiple_games(experiment_name=None, num_games=1, rate_limit=50):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run an AmongUs experiment.")
-    parser.add_argument("--name", type=str, default=None, help="Optional name for the experiment.")
-    parser.add_argument("--num_games", type=int, default=2, help="Number of games to run.")
-    parser.add_argument("--display_ui", type=bool, default=False, help="Display UI.")
-    parser.add_argument("--crewmate_llm", type=str, default=None, help="Crewmate LLM model.")
-    parser.add_argument("--impostor_llm", type=str, default=None, help="Impostor LLM model.")
-    parser.add_argument("--streamlit", type=bool, default=False, help="Streamlit.")
-    parser.add_argument("--tournament_style", type=str, default="random", help="random or 1on1.")
+    parser.add_argument("--name", type=str, default=None)
+    parser.add_argument("--loops", type=int, default=1)
+    parser.add_argument("--num_games", type=int, default=1)
+    parser.add_argument("--display_ui", type=bool, default=False)
+    parser.add_argument("--crewmate_llm", type=str, default=None)
+    parser.add_argument("--impostor_llm", type=str, default=None)
+    parser.add_argument("--streamlit", type=bool, default=False)
+    parser.add_argument("--tournament_style", type=str, default="random")
     args = parser.parse_args()
-    if args.num_games > 1 or args.display_ui == False:
+
+    if args.num_games > 1:
         ARGS["UI"] = False
+
     if args.crewmate_llm:
         ARGS["agent_config"]["CREWMATE_LLM_CHOICES"] = [args.crewmate_llm]
     if args.impostor_llm:
         ARGS["agent_config"]["IMPOSTOR_LLM_CHOICES"] = [args.impostor_llm]
+
     ARGS["tournament_style"] = args.tournament_style
-    asyncio.run(multiple_games(experiment_name=args.name, num_games=args.num_games))
+
+    # 🔥 LOOP 1 TIME
+    for i in range(args.loops):
+        loop_name = f"{args.name}_run_{i+1}" if args.name else f"run_{i+1}"
+
+        print(f"\n=== Starting experiment {i+1}/{args.loops} ===")
+
+        asyncio.run(
+            multiple_games(
+                experiment_name=loop_name,
+                num_games=args.num_games   # stays 1
+            )
+        )

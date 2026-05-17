@@ -436,7 +436,10 @@ class RolePlayingDataset(ActivationDataset):
     def row_to_prompts(self, row: pd.Series) -> str:
         system: str = row['scenario']
         question: str = row['question']
-        rollout: str = row['answer_prefix'] + row['phi4_rollout']
+        answer_prefix = "" if pd.isna(row["answer_prefix"]) else str(row["answer_prefix"])
+        phi4_rollout = "" if pd.isna(row["phi4_rollout"]) else str(row["phi4_rollout"])
+
+        rollout: str = answer_prefix + phi4_rollout
         formatted = self.format(system, question, rollout)
         return formatted, row['llm_eval_gt']
 
